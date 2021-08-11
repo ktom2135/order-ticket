@@ -1,12 +1,14 @@
 package fly.quick.order.ticket.Controllers;
 
-import fly.quick.order.ticket.ControllerDtos.ChangeTicketRequestDto;
-import fly.quick.order.ticket.ControllerDtos.ChangeTicketResponseDto;
-import fly.quick.order.ticket.BasePojo.StatusCode;
+import fly.quick.order.ticket.ControllerDtos.TicketResponseDto;
+import fly.quick.order.ticket.Model.TicketModel;
+import fly.quick.order.ticket.Services.TicketService;
 import io.swagger.annotations.Api;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,14 +17,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/flight")
 public class TicketController {
 
-    @PostMapping("/tickets/{tid}/change")
-    public ResponseEntity<ChangeTicketResponseDto> change(String tid, @RequestBody ChangeTicketRequestDto requestDto) {
+    @Autowired
+    private TicketService ticketService;
 
+    @GetMapping("/tickets/{tid}")
+    public ResponseEntity<TicketResponseDto> getTicketById(@PathVariable Long tid) {
 
-        ChangeTicketResponseDto responseDto = ChangeTicketResponseDto.builder()
-                                                               .code(StatusCode.SUCCESS)
-                                                               .message("改签成功，将在60分钟内出票")
-                                                               .build();
-        return ResponseEntity.created(null).body(responseDto);
+        TicketModel ticketModel = ticketService.getTicketById(tid);
+
+        TicketResponseDto ticketResponseDto = null;
+
+        if(ticketModel != null){
+            ticketResponseDto = new TicketResponseDto(ticketModel);
+
+            return ResponseEntity.ok().body(ticketResponseDto);
+        }
+
+        return  ResponseEntity.notFound().build();
     }
 }

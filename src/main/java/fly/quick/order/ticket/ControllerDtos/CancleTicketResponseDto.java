@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 @Builder
 @Data
-public class ChangeTicketResponseDto implements Serializable {
+public class CancleTicketResponseDto implements Serializable {
     private StatusCode code;
     private String message;
 }
