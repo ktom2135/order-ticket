@@ -30,7 +30,7 @@ public class TicketController {
     public ResponseEntity<TicketChangeResponseDto> change(Long tid, @RequestBody TicketChangeRequestDto request) {
         TicketChangeModel model = TicketChangeModel.builder().planeId(request.getPlaneId()).build();
 
-        TicketChangeResultModel ticketChangeResultModel = ticketService.change(tid, model);
+        TicketChangeResultModel ticketChangeResultModel = ticketService.change(model);
         TicketChangeResponseDto response = null;
         if(ticketChangeResultModel.status == TicketStatus.SUCCESS) {
              response = TicketChangeResponseDto.builder().code("SUCCESS").message("改签成功，将在60分钟内出票").build();

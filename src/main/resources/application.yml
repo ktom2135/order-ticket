@@ -48,5 +48,5 @@ logging:
   config: classpath:logback-json.xml
 
 feign:
-  partsStock:
+  shipping:
     url: http://aftermarket-product-management:8080

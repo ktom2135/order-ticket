@@ -1,15 +1,17 @@
-package fly.quick.order.ticket.Model;
+package fly.quick.order.ticket.Feign.Dtos;
 
+import com.sun.istack.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class TicketChangeModel {
-    private String planeId;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class LockSeatRequestFeignDto {
+
     private Long ticketId;
+
 }
