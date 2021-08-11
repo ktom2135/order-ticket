@@ -9,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 class ShippingFeignTest {
@@ -24,6 +25,16 @@ class ShippingFeignTest {
         );
         ShippingFeign shippingFeign = new ShippingFeign(stubShippingFeignClient);
         LockSetResponseFeignDto lockSetResponseFeignDto = shippingFeign.lockSeat(LockSeatRequestFeignDto.builder().build());
-        assertEquals(ShippingStatus.SEAT_LOCKED.toString(), lockSetResponseFeignDto.getShippingStatus());
+        assertEquals(ShippingStatus.SEAT_LOCKED, lockSetResponseFeignDto.getShippingStatus());
+    }
+
+
+    @Test
+    void should_throw_time_out_exception_given_shipping_feign_client_throw_timeout_exception() throws TimeoutException {
+        ShippingFeignClient stubShippingFeignClient = Mockito.mock(ShippingFeignClient.class);
+        when (stubShippingFeignClient.lockSeat(any())).thenThrow(TimeoutException.class);
+        ShippingFeign shippingFeign = new ShippingFeign(stubShippingFeignClient);
+        LockSetResponseFeignDto lockSetResponseFeignDto = shippingFeign.lockSeat(LockSeatRequestFeignDto.builder().build());
+        assertEquals(ShippingStatus.TIMEOUT, lockSetResponseFeignDto.getShippingStatus());
     }
 }
