@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,7 +26,7 @@ class TicketServiceTest {
 
 
     @Test
-    public void should_return_success_given_lock_seat_success() {
+    public void should_return_success_given_lock_seat_success() throws TimeoutException {
         TicketRepository stubTicketRepository = Mockito.mock(TicketRepository.class);
         TicketEntity successTicket = TicketEntity.builder().status(TicketStatus.SUCCESS).build();
         TicketEntity changedTicket = TicketEntity.builder().status(TicketStatus.CHANGED).build();
@@ -39,7 +40,7 @@ class TicketServiceTest {
         when(stubShippingFeign.lockSeat(any()))
                 .thenReturn(LockSetResponseFeignDto
                         .builder()
-                        .code(ShippingStatus.SEAT_LOCKED.toString())
+                        .shippingStatus(ShippingStatus.SEAT_LOCKED)
                         .message("改签成功")
                         .build());
 
@@ -72,6 +73,29 @@ class TicketServiceTest {
                 .build();
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
         assertEquals(ChangeTicketStatus.TARGET_PLAN_TIME_NO_VALID, ticketChangeResultModel.getStatus());
+
+    }
+
+    @Test
+    public void should_return_SHIPPING_SERVICE_UNAVAILABLE_given_shipping_feign_return_timeout() throws TimeoutException {
+        TicketRepository stubTicketRepository = Mockito.mock(TicketRepository.class);
+        TicketMessageSender stubTicketMessageSender = Mockito.mock(TicketMessageSender.class);
+        ShippingFeign stubShippingFeign = Mockito.mock(ShippingFeign.class);
+        when(stubShippingFeign.lockSeat(any())).thenReturn(LockSetResponseFeignDto
+                .builder()
+                .shippingStatus(ShippingStatus.TIMEOUT)
+                .build());
+
+        TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
+
+        TicketChangeModel ticketChangeModel = TicketChangeModel
+                .builder()
+                .ticketId(123L)
+                .targetPlaneFlyAt(new Date(System.currentTimeMillis() + 100000000L))
+                .targetPlaneId("TC-123-134")
+                .build();
+        TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
+        assertEquals(ChangeTicketStatus.SHIPPING_SERVICE_UNAVAILABLE, ticketChangeResultModel.getStatus());
 
     }
 }

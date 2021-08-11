@@ -1,6 +1,7 @@
 package fly.quick.order.ticket.Services;
 
 import fly.quick.order.ticket.BasePojo.ChangeTicketStatus;
+import fly.quick.order.ticket.BasePojo.ShippingStatus;
 import fly.quick.order.ticket.BasePojo.TicketAction;
 import fly.quick.order.ticket.BasePojo.TicketStatus;
 import fly.quick.order.ticket.Entity.TicketEntity;
@@ -14,7 +15,8 @@ import fly.quick.order.ticket.Model.TicketModel;
 import fly.quick.order.ticket.Repository.TicketRepository;
 import fly.quick.order.ticket.messages.TicketChangeMessage;
 import lombok.AllArgsConstructor;
-import org.apache.http.client.utils.DateUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class TicketService {
 
+    private static Logger log = LoggerFactory.getLogger(TicketService.class);
     final TicketRepository ticketRepository;
     final TicketMessageSender ticketMessageSender;
     final ShippingFeign shippingFeign;
@@ -49,11 +52,17 @@ public class TicketService {
             return TicketChangeResultModel.builder().status(ChangeTicketStatus.TARGET_PLAN_TIME_NO_VALID).build();
         }
 
+        LockSetResponseFeignDto lockSetResponseFeignDto = shippingFeign.lockSeat(generateLockSeatRequestFeignDto(model));
+
+        if(lockSetResponseFeignDto.getShippingStatus() == ShippingStatus.TIMEOUT){
+            return TicketChangeResultModel.builder().status(ChangeTicketStatus.SHIPPING_SERVICE_UNAVAILABLE).build();
+        }
+
         TicketEntity ticketEntity = ticketRepository.findById(model.getTicketId()).get();
         ticketEntity.setStatus(TicketStatus.CHANGED);
         ticketRepository.saveAndFlush(ticketEntity);
         ticketMessageSender.send(generateTicketChangeMessage(model));
-        LockSetResponseFeignDto lockSetResponseFeignDto = shippingFeign.lockSeat(generateLockSeatRequestFeignDto(model));
+
         return TicketChangeResultModel.builder().status(ChangeTicketStatus.CHANGED).build();
     }
 
