@@ -1,5 +1,6 @@
 package fly.quick.order.ticket.Services;
 
+import fly.quick.order.ticket.BasePojo.ChangeTicketStatus;
 import fly.quick.order.ticket.BasePojo.ShippingStatus;
 import fly.quick.order.ticket.BasePojo.TicketStatus;
 import fly.quick.order.ticket.Entity.TicketEntity;
@@ -45,9 +46,11 @@ class TicketServiceTest {
         TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
 
 
-        TicketChangeModel ticketChangeModel = TicketChangeModel.builder().ticketId(123L).targetPlaneId("TC-123-134").build();
+        TicketChangeModel ticketChangeModel = TicketChangeModel
+                .builder().ticketId(123L).targetPlaneId("TC-123-134")
+                .targetPlaneFlyAt(new Date(2022, 1, 1)).build();
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
-        assertEquals(TicketStatus.CHANGED, ticketChangeResultModel.getStatus());
+        assertEquals(ChangeTicketStatus.CHANGED, ticketChangeResultModel.getStatus());
 
     }
 
@@ -60,7 +63,7 @@ class TicketServiceTest {
 
         TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
 
-        Date earlyThanNowDate = new Date(System.currentTimeMillis() - 10000);
+        Date earlyThanNowDate = new Date(System.currentTimeMillis() - 10000000000L);;
         TicketChangeModel ticketChangeModel = TicketChangeModel
                 .builder()
                 .ticketId(123L)
@@ -68,7 +71,7 @@ class TicketServiceTest {
                 .targetPlaneId("TC-123-134")
                 .build();
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
-        assertEquals(TicketStatus.CHANGED_FAIL, ticketChangeResultModel.getStatus());
+        assertEquals(ChangeTicketStatus.TARGET_PLAN_TIME_NO_VALID, ticketChangeResultModel.getStatus());
 
     }
 }

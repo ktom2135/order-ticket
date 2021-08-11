@@ -1,5 +1,6 @@
 package fly.quick.order.ticket.Services;
 
+import fly.quick.order.ticket.BasePojo.ChangeTicketStatus;
 import fly.quick.order.ticket.BasePojo.TicketAction;
 import fly.quick.order.ticket.BasePojo.TicketStatus;
 import fly.quick.order.ticket.Entity.TicketEntity;
@@ -43,8 +44,9 @@ public class TicketService {
     @Transactional
     public TicketChangeResultModel change(TicketChangeModel model) {
 
-        if (model.getTargetPlaneFlyAt().before(new Date())) {
-            return TicketChangeResultModel.builder().status(TicketStatus.CHANGED_FAIL).build();
+
+        if (model.getTargetPlaneFlyAt().before(new Date(System.currentTimeMillis()))) {
+            return TicketChangeResultModel.builder().status(ChangeTicketStatus.TARGET_PLAN_TIME_NO_VALID).build();
         }
 
         TicketEntity ticketEntity = ticketRepository.findById(model.getTicketId()).get();
@@ -52,7 +54,7 @@ public class TicketService {
         ticketRepository.saveAndFlush(ticketEntity);
         ticketMessageSender.send(generateTicketChangeMessage(model));
         LockSetResponseFeignDto lockSetResponseFeignDto = shippingFeign.lockSeat(generateLockSeatRequestFeignDto(model));
-        return TicketChangeResultModel.builder().status(TicketStatus.CHANGED).build();
+        return TicketChangeResultModel.builder().status(ChangeTicketStatus.CHANGED).build();
     }
 
     private TicketChangeMessage generateTicketChangeMessage(TicketChangeModel model) {

@@ -1,6 +1,7 @@
 package fly.quick.order.ticket.Controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fly.quick.order.ticket.BasePojo.ChangeTicketStatus;
 import fly.quick.order.ticket.BasePojo.TicketStatus;
 import fly.quick.order.ticket.ControllerDtos.ChangeTicketRequestDto;
 import fly.quick.order.ticket.Entity.TicketEntity;
@@ -42,7 +43,8 @@ class TicketControllerTest extends TestBase {
     public void should_change_ticket_success_given_ticket_service_change_ticket_success() throws Exception {
 
         Long ticketId = 123L;
-        TicketChangeResultModel changeTicketSucessModel = TicketChangeResultModel.builder().status(TicketStatus.SUCCESS).build();
+        TicketChangeResultModel changeTicketSucessModel = TicketChangeResultModel
+                .builder().status(ChangeTicketStatus.CHANGED).build();
         Mockito.when(ticketService.change(any()))
                .thenReturn(changeTicketSucessModel);
 
@@ -65,14 +67,14 @@ class TicketControllerTest extends TestBase {
         Long ticketId = 123L;
         TicketChangeResultModel changeTicketSucessModel = TicketChangeResultModel
                 .builder()
-                .status(TicketStatus.CHANGED_FAIL).build();
+                .status(ChangeTicketStatus.TARGET_PLAN_TIME_NO_VALID).build();
         Mockito.when(ticketService.change(any()))
                .thenReturn(changeTicketSucessModel);
 
         ChangeTicketRequestDto request = ChangeTicketRequestDto
                 .builder()
                 .targetPlanId("TC001")
-                .targetPlanFlyAt(new Date(System.currentTimeMillis() - 10000))
+                .targetPlanFlyAt(new Date(System.currentTimeMillis()))
                 .build();
         String requestJson = objectMapper.writeValueAsString(request);
 
@@ -83,5 +85,31 @@ class TicketControllerTest extends TestBase {
                .andExpect(status().isBadRequest())
                .andExpect(jsonPath("$.code", is("TARGET_PLAN_TIME_NO_VALID")))
                .andExpect(jsonPath("$.message", is("改签失败，目标航班已起飞")));
+    }
+
+    @Test
+    public void should_change_ticket_fail_given_shipping_service_unavailable() throws Exception {
+
+        Long ticketId = 123L;
+        TicketChangeResultModel changeTicketSucessModel = TicketChangeResultModel
+                .builder()
+                .status(ChangeTicketStatus.SHIPPING_SERVICE_UNAVAILABLE ).build();
+        Mockito.when(ticketService.change(any()))
+               .thenReturn(changeTicketSucessModel);
+
+        ChangeTicketRequestDto request = ChangeTicketRequestDto
+                .builder()
+                .targetPlanId("TC001")
+                .targetPlanFlyAt(new Date(System.currentTimeMillis() + 10000))
+                .build();
+        String requestJson = objectMapper.writeValueAsString(request);
+
+
+        mockMvc.perform(post("/flight/tickets/" + ticketId + "/change")
+                .content(requestJson)
+                .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isBadRequest())
+               .andExpect(jsonPath("$.code", is("SHIPPING_SERVICE_UNAVAILABLE")))
+               .andExpect(jsonPath("$.message", is("改签失败，无法锁定改签座位")));
     }
 }

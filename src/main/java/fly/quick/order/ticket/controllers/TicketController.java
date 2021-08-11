@@ -1,5 +1,6 @@
 package fly.quick.order.ticket.Controllers;
 
+import fly.quick.order.ticket.BasePojo.ChangeTicketStatus;
 import fly.quick.order.ticket.BasePojo.TicketStatus;
 import fly.quick.order.ticket.ControllerDtos.TicketChangeRequestDto;
 import fly.quick.order.ticket.ControllerDtos.TicketChangeResponseDto;
@@ -32,19 +33,25 @@ public class TicketController {
 
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(model);
         TicketChangeResponseDto response = null;
-        if (ticketChangeResultModel.status == TicketStatus.SUCCESS) {
+        if (ticketChangeResultModel.status == ChangeTicketStatus.CHANGED) {
             response = TicketChangeResponseDto.builder().code("SUCCESS").message("改签成功，将在60分钟内出票").build();
 
             return ResponseEntity.ok().body(response);
-        } else {
+        } else if(ticketChangeResultModel.status == ChangeTicketStatus.TARGET_PLAN_TIME_NO_VALID) {
             response = TicketChangeResponseDto.builder()
                                               .code("TARGET_PLAN_TIME_NO_VALID")
                                               .message("改签失败，目标航班已起飞")
                                               .build();
 
             return ResponseEntity.badRequest().body(response);
-        }
+        } else {
+            response = TicketChangeResponseDto.builder()
+                                              .code("SHIPPING_SERVICE_UNAVAILABLE")
+                                              .message("改签失败，无法锁定改签座位")
+                                              .build();
 
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
 
