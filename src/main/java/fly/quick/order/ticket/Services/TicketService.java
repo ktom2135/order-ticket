@@ -13,9 +13,11 @@ import fly.quick.order.ticket.Model.TicketModel;
 import fly.quick.order.ticket.Repository.TicketRepository;
 import fly.quick.order.ticket.messages.TicketChangeMessage;
 import lombok.AllArgsConstructor;
+import org.apache.http.client.utils.DateUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -40,6 +42,11 @@ public class TicketService {
 
     @Transactional
     public TicketChangeResultModel change(TicketChangeModel model) {
+
+        if (model.getTargetPlaneFlyAt().before(new Date())) {
+            return TicketChangeResultModel.builder().status(TicketStatus.CHANGED_FAIL).build();
+        }
+
         TicketEntity ticketEntity = ticketRepository.findById(model.getTicketId()).get();
         ticketEntity.setStatus(TicketStatus.CHANGED);
         ticketRepository.saveAndFlush(ticketEntity);

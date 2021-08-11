@@ -13,6 +13,7 @@ import fly.quick.order.ticket.messages.TicketChangeMessage;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,9 +45,30 @@ class TicketServiceTest {
         TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
 
 
-        TicketChangeModel ticketChangeModel= TicketChangeModel.builder().ticketId(123L).planeId("TC-123-134").build();
+        TicketChangeModel ticketChangeModel = TicketChangeModel.builder().ticketId(123L).targetPlaneId("TC-123-134").build();
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
         assertEquals(TicketStatus.CHANGED, ticketChangeResultModel.getStatus());
+
+    }
+
+
+    @Test
+    public void should_return_fail_given_change_target_plane_fly_at_early_than_now() {
+        TicketRepository stubTicketRepository = Mockito.mock(TicketRepository.class);
+        TicketMessageSender stubTicketMessageSender = Mockito.mock(TicketMessageSender.class);
+        ShippingFeign stubShippingFeign = Mockito.mock(ShippingFeign.class);
+
+        TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
+
+        Date earlyThanNowDate = new Date(System.currentTimeMillis() - 10000);
+        TicketChangeModel ticketChangeModel = TicketChangeModel
+                .builder()
+                .ticketId(123L)
+                .targetPlaneFlyAt(earlyThanNowDate)
+                .targetPlaneId("TC-123-134")
+                .build();
+        TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
+        assertEquals(TicketStatus.CHANGED_FAIL, ticketChangeResultModel.getStatus());
 
     }
 }
