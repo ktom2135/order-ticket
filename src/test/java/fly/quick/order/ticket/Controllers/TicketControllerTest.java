@@ -57,4 +57,31 @@ class TicketControllerTest extends TestBase {
                .andExpect(jsonPath("$.code", is("SUCCESS")))
                .andExpect(jsonPath("$.message", is("改签成功，将在60分钟内出票")));
     }
+
+
+    @Test
+    public void should_change_ticket_fail_given_target_plane_fly_at_before_now() throws Exception {
+
+        Long ticketId = 123L;
+        TicketChangeResultModel changeTicketSucessModel = TicketChangeResultModel
+                .builder()
+                .status(TicketStatus.CHANGED_FAIL).build();
+        Mockito.when(ticketService.change(any()))
+               .thenReturn(changeTicketSucessModel);
+
+        ChangeTicketRequestDto request = ChangeTicketRequestDto
+                .builder()
+                .targetPlanId("TC001")
+                .targetPlanFlyAt(new Date(System.currentTimeMillis() - 10000))
+                .build();
+        String requestJson = objectMapper.writeValueAsString(request);
+
+
+        mockMvc.perform(post("/flight/tickets/" + ticketId + "/change")
+                .content(requestJson)
+                .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isBadRequest())
+               .andExpect(jsonPath("$.code", is("TARGET_PLAN_TIME_NO_VALID")))
+               .andExpect(jsonPath("$.message", is("改签失败，目标航班已起飞")));
+    }
 }

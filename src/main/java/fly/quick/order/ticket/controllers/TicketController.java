@@ -28,14 +28,23 @@ public class TicketController {
 
     @PostMapping("tickets/{tid}/change")
     public ResponseEntity<TicketChangeResponseDto> change(Long tid, @RequestBody TicketChangeRequestDto request) {
-        TicketChangeModel model = TicketChangeModel.builder().planeId(request.getPlaneId()).build();
+        TicketChangeModel model = TicketChangeModel.builder().targetPlaneId(request.getPlaneId()).build();
 
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(model);
         TicketChangeResponseDto response = null;
-        if(ticketChangeResultModel.status == TicketStatus.SUCCESS) {
-             response = TicketChangeResponseDto.builder().code("SUCCESS").message("改签成功，将在60分钟内出票").build();
+        if (ticketChangeResultModel.status == TicketStatus.SUCCESS) {
+            response = TicketChangeResponseDto.builder().code("SUCCESS").message("改签成功，将在60分钟内出票").build();
+
+            return ResponseEntity.ok().body(response);
+        } else {
+            response = TicketChangeResponseDto.builder()
+                                              .code("TARGET_PLAN_TIME_NO_VALID")
+                                              .message("改签失败，目标航班已起飞")
+                                              .build();
+
+            return ResponseEntity.badRequest().body(response);
         }
-        return ResponseEntity.ok().body(response);
+
     }
 
 

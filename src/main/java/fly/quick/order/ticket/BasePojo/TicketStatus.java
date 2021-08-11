@@ -4,4 +4,5 @@ public enum TicketStatus {
     SUCCESS,
     FAIL,
     CHANGED,
+    CHANGED_FAIL
 }
