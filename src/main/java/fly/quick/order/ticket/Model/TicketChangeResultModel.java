@@ -6,18 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-public class TicketModel {
-
-    private Long id;
-    private Long userId;
-    private Date createdAt;
-    private TicketStatus status;
-    private String meterNo;
-
+public class TicketChangeResultModel {
+    public TicketStatus status;
 }

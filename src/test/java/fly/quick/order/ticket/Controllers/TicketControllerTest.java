@@ -1,43 +1,28 @@
 package fly.quick.order.ticket.Controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fly.quick.order.ticket.BasePojo.StatusCode;
+import fly.quick.order.ticket.BasePojo.TicketStatus;
 import fly.quick.order.ticket.ControllerDtos.ChangeTicketRequestDto;
 import fly.quick.order.ticket.Entity.TicketEntity;
+import fly.quick.order.ticket.Model.TicketChangeResultModel;
 import fly.quick.order.ticket.Repository.TicketRepository;
+import fly.quick.order.ticket.Services.TicketService;
 import fly.quick.order.ticket.bases.TestBase;
-import org.aspectj.apache.bcel.util.Repository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import wiremock.org.eclipse.jetty.util.DateCache;
 
 import java.util.Date;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-
-
-import javax.transaction.Transactional;
-
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class TicketControllerTest extends TestBase {
 
@@ -50,19 +35,42 @@ class TicketControllerTest extends TestBase {
     @Autowired
     TicketRepository ticketRepository;
 
+    @MockBean
+    TicketService ticketService;
+
     @Test
-    public void should_return_correct_ticket_given_an_exist_ticket_id_when_the_ticket_exist() throws Exception {
+    public void should_change_ticket_success_given_ticket_service_change_ticket_suceess() throws Exception {
+
+        Long ticketId = 123L;
+        TicketChangeResultModel changeTicketSucessModel = TicketChangeResultModel.builder().status(TicketStatus.SUCCESS).build();
+        Mockito.when(ticketService.change(any(), any()))
+                                  .thenReturn(changeTicketSucessModel);
+
+        ChangeTicketRequestDto request = ChangeTicketRequestDto.builder().targetPlanId("TC001").build();
+        String requestJson = objectMapper.writeValueAsString(request);
+
+
+        mockMvc.perform(post("/flight/tickets/" + ticketId + "/change")
+                .content(requestJson)
+                .contentType(MediaType.APPLICATION_JSON))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.code", is("SUCCESS")))
+               .andExpect(jsonPath("$.message", is("改签成功，将在60分钟内出票")));
+    }
+
+    @Test
+    public void should_return_correct_ticket_given_an_exist_ticket_id() throws Exception {
 
         TicketEntity ticketEntity = TicketEntity.builder()
                                                 .userId(123L)
                                                 .createdAt(new Date())
-                                                .status(StatusCode.SUCCESS)
+                                                .status(TicketStatus.SUCCESS)
                                                 .meterNo("0001-11-001")
                                                 .build();
 
-        TicketEntity savedTicketEntity = ticketRepository.saveAndFlush(ticketEntity);
+        TicketEntity existingTicket = ticketRepository.saveAndFlush(ticketEntity);
 
-        mockMvc.perform(get("/flight/tickets/"+savedTicketEntity.getId()))
+        mockMvc.perform(get("/flight/tickets/" + existingTicket.getId()))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.userId", is(ticketEntity.getUserId().intValue())));
     }

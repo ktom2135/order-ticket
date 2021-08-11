@@ -1,6 +1,6 @@
 package fly.quick.order.ticket.BasePojo;
 
-public enum StatusCode {
+public enum TicketStatus {
     SUCCESS,
     FAIL
 }

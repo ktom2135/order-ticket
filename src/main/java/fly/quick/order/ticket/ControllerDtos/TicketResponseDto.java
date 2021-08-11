@@ -1,6 +1,6 @@
 package fly.quick.order.ticket.ControllerDtos;
 
-import fly.quick.order.ticket.BasePojo.StatusCode;
+import fly.quick.order.ticket.BasePojo.TicketStatus;
 import fly.quick.order.ticket.Model.TicketModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +17,7 @@ public class TicketResponseDto {
     private Long id;
     private Long userId;
     private Date createdAt;
-    private StatusCode status;
+    private TicketStatus status;
     private String meterNo;
 
     public TicketResponseDto(TicketModel ticketModel) {

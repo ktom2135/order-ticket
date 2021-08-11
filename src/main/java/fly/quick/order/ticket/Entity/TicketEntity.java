@@ -1,6 +1,6 @@
 package fly.quick.order.ticket.Entity;
 
-import fly.quick.order.ticket.BasePojo.StatusCode;
+import fly.quick.order.ticket.BasePojo.TicketStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,5 +41,5 @@ public class TicketEntity {
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private StatusCode status;
+    private TicketStatus status;
 }
