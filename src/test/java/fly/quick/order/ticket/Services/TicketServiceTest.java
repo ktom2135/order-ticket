@@ -35,7 +35,11 @@ class TicketServiceTest {
 
         ShippingFeign stubShippingFeign = Mockito.mock(ShippingFeign.class);
         when(stubShippingFeign.lockSeat(any()))
-                .thenReturn(LockSetResponseFeignDto.builder().shippingStatus(ShippingStatus.SEAT_LOCKED).build());
+                .thenReturn(LockSetResponseFeignDto
+                        .builder()
+                        .code(ShippingStatus.SEAT_LOCKED.toString())
+                        .message("改签成功")
+                        .build());
 
         TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
 

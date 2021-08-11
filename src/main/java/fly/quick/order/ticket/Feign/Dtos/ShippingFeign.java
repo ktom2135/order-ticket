@@ -1,13 +1,18 @@
 package fly.quick.order.ticket.Feign.Dtos;
 
+import fly.quick.order.ticket.Feign.ShippingFeignClient;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class ShippingFeign {
 
-    public LockSetResponseFeignDto lockSeat(LockSeatRequestFeignDto generateLockSeatRequestFeignDto) {
+    final ShippingFeignClient shippingClient;
 
-        return null;
+    public LockSetResponseFeignDto lockSeat(LockSeatRequestFeignDto lockSeatRequestFeignDto) {
+        return shippingClient.lockSeat(lockSeatRequestFeignDto);
     }
 }
 

@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class LockSetResponseFeignDto {
-    public ShippingStatus shippingStatus;
+    private String code;
+    private String message;
 }
 
 
