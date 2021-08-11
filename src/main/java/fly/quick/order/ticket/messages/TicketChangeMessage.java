@@ -12,5 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TicketChangeMessage {
     private TicketAction ticketAction;
+    private String targetPlaneId;
 }
 
