@@ -1,7 +1,7 @@
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/order-ticket?characterEncoding=utf8&serverTimezone=UTC
-    name: otr_part_purchase
+    name: order_ticket
     initial-size: 10
     max-active: 250
     max-wait: 1000

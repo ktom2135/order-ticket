@@ -13,7 +13,7 @@ spring:
     url: jdbc:mysql://localhost:60000/order_ticket?characterEncoding=utf8
   boot:
     mariadb4j:
-      databaseName: otr_part_purchase
+      databaseName: order_ticket
   flyway:
     locations: classpath:db/migration,classpath:db/data
   jackson:
