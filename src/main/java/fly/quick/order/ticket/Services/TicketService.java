@@ -1,9 +1,14 @@
 package fly.quick.order.ticket.Services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fly.quick.order.ticket.BasePojo.ChangeTicketStatus;
+import fly.quick.order.ticket.BasePojo.MessageType;
+import fly.quick.order.ticket.BasePojo.SendStatus;
 import fly.quick.order.ticket.BasePojo.ShippingStatus;
 import fly.quick.order.ticket.BasePojo.TicketAction;
 import fly.quick.order.ticket.BasePojo.TicketStatus;
+import fly.quick.order.ticket.Entity.MessageEntity;
 import fly.quick.order.ticket.Entity.TicketEntity;
 import fly.quick.order.ticket.Feign.Dtos.LockSeatRequestFeignDto;
 import fly.quick.order.ticket.Feign.Dtos.LockSetResponseFeignDto;
@@ -12,6 +17,7 @@ import fly.quick.order.ticket.MQ.TicketMessageSender;
 import fly.quick.order.ticket.Model.TicketChangeModel;
 import fly.quick.order.ticket.Model.TicketChangeResultModel;
 import fly.quick.order.ticket.Model.TicketModel;
+import fly.quick.order.ticket.Repository.MessageRepository;
 import fly.quick.order.ticket.Repository.TicketRepository;
 import fly.quick.order.ticket.messages.TicketChangeMessage;
 import lombok.AllArgsConstructor;
@@ -31,6 +37,9 @@ public class TicketService {
     final TicketRepository ticketRepository;
     final TicketMessageSender ticketMessageSender;
     final ShippingFeign shippingFeign;
+
+    final ObjectMapper objectMapper;
+    final MessageRepository messageRepository;
 
     public TicketModel getTicketById(Long tid) {
         Optional<TicketEntity> ticketEntityOptional = ticketRepository.findById(tid);
@@ -54,15 +63,22 @@ public class TicketService {
 
         LockSetResponseFeignDto lockSetResponseFeignDto = shippingFeign.lockSeat(generateLockSeatRequestFeignDto(model));
 
-        if(lockSetResponseFeignDto.getShippingStatus() == ShippingStatus.TIMEOUT){
+        if (lockSetResponseFeignDto.getShippingStatus() == ShippingStatus.TIMEOUT) {
             return TicketChangeResultModel.builder().status(ChangeTicketStatus.SHIPPING_SERVICE_UNAVAILABLE).build();
         }
 
         TicketEntity ticketEntity = ticketRepository.findById(model.getTicketId()).get();
         ticketEntity.setStatus(TicketStatus.CHANGED);
         ticketRepository.saveAndFlush(ticketEntity);
-        ticketMessageSender.send(generateTicketChangeMessage(model));
-
+        TicketChangeMessage ticketChangeMessage = generateTicketChangeMessage(model);
+        boolean sendResult = ticketMessageSender.send(ticketChangeMessage);
+        if (!sendResult) {
+            try {
+                saveMessage(ticketChangeMessage);
+            } catch (Exception ex) {
+                log.error("Save message fail: {}", ex);
+            }
+        }
         return TicketChangeResultModel.builder().status(ChangeTicketStatus.CHANGED).build();
     }
 
@@ -72,5 +88,17 @@ public class TicketService {
 
     private LockSeatRequestFeignDto generateLockSeatRequestFeignDto(TicketChangeModel model) {
         return LockSeatRequestFeignDto.builder().ticketId(model.getTicketId()).build();
+    }
+
+    private void saveMessage(TicketChangeMessage ticketChangeMessage) throws JsonProcessingException {
+
+        String content = objectMapper.writeValueAsString(ticketChangeMessage);
+        MessageEntity messageEntity = MessageEntity.builder().messageType(MessageType.CHANGE_TICKET)
+                                                   .content(content)
+                                                   .sendStatus(SendStatus.NO_SEND)
+                                                   .build();
+
+        messageRepository.saveAndFlush(messageEntity);
+
     }
 }

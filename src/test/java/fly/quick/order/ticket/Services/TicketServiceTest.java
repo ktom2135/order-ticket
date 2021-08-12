@@ -44,7 +44,7 @@ class TicketServiceTest {
                         .message("改签成功")
                         .build());
 
-        TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
+        TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign, null, null);
 
 
         TicketChangeModel ticketChangeModel = TicketChangeModel
@@ -52,7 +52,6 @@ class TicketServiceTest {
                 .targetPlaneFlyAt(new Date(2022, 1, 1)).build();
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
         assertEquals(ChangeTicketStatus.CHANGED, ticketChangeResultModel.getStatus());
-
     }
 
 
@@ -62,9 +61,14 @@ class TicketServiceTest {
         TicketMessageSender stubTicketMessageSender = Mockito.mock(TicketMessageSender.class);
         ShippingFeign stubShippingFeign = Mockito.mock(ShippingFeign.class);
 
-        TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
+        TicketService ticketService = new TicketService(stubTicketRepository,
+                stubTicketMessageSender,
+                stubShippingFeign,
+                null,
+                null);
 
-        Date earlyThanNowDate = new Date(System.currentTimeMillis() - 10000000000L);;
+        Date earlyThanNowDate = new Date(System.currentTimeMillis() - 10000000000L);
+        ;
         TicketChangeModel ticketChangeModel = TicketChangeModel
                 .builder()
                 .ticketId(123L)
@@ -86,7 +90,11 @@ class TicketServiceTest {
                 .shippingStatus(ShippingStatus.TIMEOUT)
                 .build());
 
-        TicketService ticketService = new TicketService(stubTicketRepository, stubTicketMessageSender, stubShippingFeign);
+        TicketService ticketService = new TicketService(stubTicketRepository,
+                stubTicketMessageSender,
+                stubShippingFeign,
+                null,
+                null);
 
         TicketChangeModel ticketChangeModel = TicketChangeModel
                 .builder()
@@ -96,6 +104,38 @@ class TicketServiceTest {
                 .build();
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
         assertEquals(ChangeTicketStatus.SHIPPING_SERVICE_UNAVAILABLE, ticketChangeResultModel.getStatus());
+    }
 
+    @Test
+    public void should_return_success_given_send_message_fail() throws TimeoutException {
+        TicketRepository stubTicketRepository = Mockito.mock(TicketRepository.class);
+        TicketEntity successTicket = TicketEntity.builder().status(TicketStatus.SUCCESS).build();
+        TicketEntity changedTicket = TicketEntity.builder().status(TicketStatus.CHANGED).build();
+        when(stubTicketRepository.findById(any())).thenReturn(Optional.of(successTicket));
+        when(stubTicketRepository.saveAndFlush(any())).thenReturn(changedTicket);
+
+        TicketMessageSender stubTicketMessageSender = Mockito.mock(TicketMessageSender.class);
+        when(stubTicketMessageSender.send(any(TicketChangeMessage.class))).thenReturn(false);
+
+        ShippingFeign stubShippingFeign = Mockito.mock(ShippingFeign.class);
+        when(stubShippingFeign.lockSeat(any()))
+                .thenReturn(LockSetResponseFeignDto
+                        .builder()
+                        .shippingStatus(ShippingStatus.SEAT_LOCKED)
+                        .message("改签成功")
+                        .build());
+
+        TicketService ticketService = new TicketService(stubTicketRepository,
+                stubTicketMessageSender,
+                stubShippingFeign,
+                null,
+                null);
+
+
+        TicketChangeModel ticketChangeModel = TicketChangeModel
+                .builder().ticketId(123L).targetPlaneId("TC-123-134")
+                .targetPlaneFlyAt(new Date(2022, 1, 1)).build();
+        TicketChangeResultModel ticketChangeResultModel = ticketService.change(ticketChangeModel);
+        assertEquals(ChangeTicketStatus.CHANGED, ticketChangeResultModel.getStatus());
     }
 }
