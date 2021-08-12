@@ -11,7 +11,11 @@ public class TicketMessageSender {
     private final RabbitTemplate rabbitTemplate;
 
     public boolean send(TicketChangeMessage generateTicketChangeMessage) {
-        rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE_NAME, RabbitMqConfig.ROUNTING_KEY, generateTicketChangeMessage);
-        return true;
+        try {
+            rabbitTemplate.convertAndSend(RabbitMqConfig.EXCHANGE_NAME, RabbitMqConfig.ROUNTING_KEY, generateTicketChangeMessage);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 }
