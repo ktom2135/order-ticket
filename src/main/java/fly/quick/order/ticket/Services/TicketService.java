@@ -82,7 +82,7 @@ public class TicketService {
     }
 
     private TicketChangeMessage generateTicketChangeMessage(TicketChangeModel model) {
-        return TicketChangeMessage.builder().ticketAction(TicketAction.CHANGE).build();
+        return TicketChangeMessage.builder().targetPlaneId(model.getTargetPlaneId()).ticketAction(TicketAction.CHANGE).build();
     }
 
     private LockSeatRequestFeignDto generateLockSeatRequestFeignDto(TicketChangeModel model) {
