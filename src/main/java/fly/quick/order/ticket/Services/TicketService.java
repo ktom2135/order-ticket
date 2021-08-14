@@ -56,7 +56,6 @@ public class TicketService {
     @Transactional
     public TicketChangeResultModel change(TicketChangeModel model) {
 
-
         if (model.getTargetPlaneFlyAt().before(new Date(System.currentTimeMillis()))) {
             return TicketChangeResultModel.builder().status(ChangeTicketStatus.TARGET_PLAN_TIME_NO_VALID).build();
         }

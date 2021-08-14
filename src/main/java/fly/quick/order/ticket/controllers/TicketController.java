@@ -28,8 +28,11 @@ public class TicketController {
     private TicketService ticketService;
 
     @PostMapping("tickets/{tid}/change")
-    public ResponseEntity<TicketChangeResponseDto> change(Long tid, @RequestBody TicketChangeRequestDto request) {
-        TicketChangeModel model = TicketChangeModel.builder().targetPlaneId(request.getPlaneId()).build();
+    public ResponseEntity<TicketChangeResponseDto> change(@PathVariable Long tid, @RequestBody TicketChangeRequestDto request) {
+        TicketChangeModel model = TicketChangeModel.builder()
+                                                   .ticketId(tid)
+                                                   .targetPlaneFlyAt(request.getTargetPlaneFlyAt())
+                                                   .targetPlaneId(request.getPlaneId()).build();
 
         TicketChangeResultModel ticketChangeResultModel = ticketService.change(model);
         TicketChangeResponseDto response = null;

@@ -18,7 +18,7 @@ public class ShippingFeign {
         try {
             return shippingClient.lockSeat(lockSeatRequestFeignDto);
         }
-        catch (TimeoutException ex){
+        catch (Exception ex){
             return LockSetResponseFeignDto.builder().shippingStatus(ShippingStatus.TIMEOUT).build();
         }
     }
